@@ -1,11 +1,8 @@
 # Utility2MOLIS
 
 library(shiny)
-library(tidyverse)
-library(stringr)
 library(readxl)
-library(cowplot)
-library(DT)
+library(tidyverse)
 
 ###
 shinyUI(fluidPage(

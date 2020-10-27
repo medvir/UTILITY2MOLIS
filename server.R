@@ -1,11 +1,7 @@
 # Utility2MOLIS
 
 library(shiny)
-library(stringr)
 library(readxl)
-library(cowplot)
-library(DT)
-library(tidyselect)
 library(tidyverse)
 
 shinyServer(function(input, output, session) {
