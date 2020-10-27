@@ -35,7 +35,7 @@ filename_header <- paste(str_replace_all(params$filename, "_", "\\\\_"), "-", pa
 \cfoot{\thepage\ of \pageref{LastPage}}
 
 Report Creation Time: `r format(Sys.time(), usetz = TRUE)`  
-PCRresults Version: `r params$git_tag` (`r params$git_id_short`)
+Utility2MOLIS Version: `r params$git_tag` (`r params$git_id_short`)
 
 ```{r table}
 # leaves cells with NA blank instead of printing NA
