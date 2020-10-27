@@ -40,6 +40,7 @@ Utility2MOLIS Version: `r params$git_tag` (`r params$git_id_short`)
 ```{r table}
 # leaves cells with NA blank instead of printing NA
 options(knitr.kable.NA = "")
+options(scipen=999)
 
 tidy_data <- params$tidy_data
 
@@ -53,7 +54,7 @@ linesep_custom <-
   pull(not_same)
 
 tidy_data %>%
-  kable(format = "latex", longtable = TRUE, booktabs = TRUE, linesep = linesep_custom) %>%
+  kable(format = "latex", longtable = TRUE, booktabs = TRUE, linesep = linesep_custom, format.args = list(big.mark = "'")) %>%
   kable_styling(latex_options = c("hold_position", "repeat_header")) %>%
   row_spec(pos_res, bold = TRUE)
 
