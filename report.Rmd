@@ -2,18 +2,16 @@
 title: ""
 output: pdf_document
 params:
-  filename: NA
-  end_time: NA
-  cycler_nr: NA
-  plot: NA
-  raw_data: NA
-  molis_out_table: NA
-  MS2_median: NA
-  MS2_sd: NA
+  filename: "test filename"
+  date: "test date"
+  tidy_data: NA
+  git_tag: NA
+  git_id_short: NA
 header-includes:
   - \usepackage{lastpage}
   - \usepackage{fancyhdr}
   - \usepackage{booktabs}
+  - \usepackage{longtable}
   - \pagestyle{fancy}
 ---
 
@@ -30,94 +28,34 @@ library(kableExtra)
 # replace _ of filename with \_ to prevent latex from entering the math mode
 # see https://xkcd.com/1638/ and https://github.com/STAT545-UBC/Discussion/issues/394
 # CAUTION some symbols (e.g "--") might still be formatted differently
-filename_header <- str_replace_all(params$filename, "_", "\\\\_")
+filename_header <- paste(str_replace_all(params$filename, "_", "\\\\_"), "-", params$date)
 ```
 
 \fancyhead[CO,C]{`r filename_header`}
 \cfoot{\thepage\ of \pageref{LastPage}}
 
-```{r instrument}
-# convert cycler_nr to cycler_type (both vectors have to be in the same order)
-cycler_nr <- c("278870036", "278870051", "278880633", "278880634", "2778720020214")
-cycler_type <- c("QS7-rechts", "QS7-links", "ViiA-7-rechts", "ViiA-7-links", "QS7Pro")
-
-cycler_i <- match(params$cycler_nr, cycler_nr)
-```
-
-Experiment Run End Time: `r params$end_time`  
-Instrument: `r cycler_type[cycler_i]` (`r params$cycler_nr`)  
+Report Creation Time: `r format(Sys.time(), usetz = TRUE)`  
+PCRresults Version: `r params$git_tag` (`r params$git_id_short`)
 
 ```{r table}
 # leaves cells with NA blank instead of printing NA
 options(knitr.kable.NA = "")
 
-molis_out_table <- params$molis_out_table
+tidy_data <- params$tidy_data
 
-# column names can't contain underscores when working with footnotes
-names(molis_out_table) <- str_replace_all(names(molis_out_table), "_", "-")
-names(molis_out_table)[4] <- paste0(names(molis_out_table)[4],
-                                    footnote_marker_symbol(1))
+pos_res <- which(tidy_data$Result == "Positiv")
 
-pos_res <- which(molis_out_table$result == "pos" | molis_out_table$result == "gw" | molis_out_table$result == "(pos)")
+# create a custom vector which will be used to include a linesep after each Result change
+linesep_custom <-
+  tidy_data %>%
+  mutate(not_same = if_else(Result == lead(Result), "", "\\addlinespace"),
+         not_same = replace_na(not_same, "")) %>%
+  pull(not_same)
 
-molis_out_table %>%
-  kable(booktabs = TRUE, linesep = "", escape = FALSE) %>%
-  kable_styling(full_width = FALSE, latex_options = "hold_position") %>%
-  row_spec(pos_res, bold = TRUE) %>%
-  footnote(symbol = paste0("median = ", params$MS2_median, ", sd = ", params$MS2_sd))
-```
+tidy_data %>%
+  kable(format = "latex", longtable = TRUE, booktabs = TRUE, linesep = linesep_custom) %>%
+  kable_styling(latex_options = c("hold_position", "repeat_header")) %>%
+  row_spec(pos_res, bold = TRUE)
 
-
-\newpage
-
-
-```{r plot, fig.height = 11, fig.width = 8}
-params$plot
-```
-
-\newpage
-
-```{r plate_layout, fig.width = 8}
-params$raw_data %>%
-  group_by(sample_name, target) %>%
-  sample_n(1) %>%
-  ungroup() %>%
-  filter(target != "MS-2" & target != "MS2") %>%
-  mutate(target = ifelse(target == "GAPDH" | target == "GAP", paste0(target, " / MS-2"), target),
-         row = str_sub(well_pos, 1, 1),
-         row = fct_relevel(row, c("H", "G", "F", "E", "D", "C", "B", "A")),
-         column = as.numeric(str_sub(well_pos, 2))) %>%
-  ggplot(aes(x = row, y = column, label = sample_name, color = target)) +
-  geom_text(size = 2.5) +
-  coord_flip() +
-  #scale_color_manual(values = c("#E69F00", "#009E73")) +
-  scale_y_continuous(limits = c(1, 12), breaks = c(1:12), minor_breaks = NULL) +
-  theme_light() +
-  theme(legend.position = "top",
-        legend.title = element_blank()) +
-  labs(x = NULL, y = NULL)
-
-```
-
-------
-
-```{r plate_ct, fig.width = 8}
-params$raw_data %>%
-  group_by(sample_name, target) %>%
-  sample_n(1) %>%
-  ungroup() %>%
-  mutate(row = str_sub(well_pos, 1, 1),
-         row = fct_relevel(row, c("H", "G", "F", "E", "D", "C", "B", "A")),
-         column = as.numeric(str_sub(well_pos, 2))) %>%
-  ggplot(aes(x = row, y = column, shape = target)) +
-  geom_point(aes(fill = as.numeric(ct_export)), size = 4) +
-  coord_flip() +
-  scale_y_continuous(limits = c(1, 12), breaks = c(1:12), minor_breaks = NULL) +
-  scale_shape_manual(values = c(21, 24, 25)) +
-  scale_fill_gradient(low = "brown3", high = "white", na.value = "grey", limits = c(NA, 45)) +
-  theme_light() +
-  theme(legend.position = "top",
-        legend.title = element_blank()) +
-  labs(x = NULL, y = NULL)
 
 ```
