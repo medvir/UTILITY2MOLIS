@@ -9,7 +9,7 @@ library(DT)
 
 ###
 shinyUI(fluidPage(
-    titlePanel("UtilityMOLIS"),
+    titlePanel("Utility2MOLIS"),
     fluidRow(
         column(3,
                wellPanel(
